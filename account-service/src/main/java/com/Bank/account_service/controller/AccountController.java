@@ -1,6 +1,9 @@
 package com.Bank.account_service.controller;
 
+import com.Bank.account_service.dto.BalanceRequest;
 import com.Bank.account_service.dto.CreateAccountRequest;
+import com.Bank.account_service.dto.TransactionPinRequest;
+import com.Bank.account_service.dto.TransferRequest;
 import com.Bank.account_service.entity.Account;
 import com.Bank.account_service.service.AccountService;
 import jakarta.validation.Valid;
@@ -24,33 +27,40 @@ public class AccountController {
 
 @GetMapping("/{accountNumber}")
 public Account searchAccount(@PathVariable String accountNumber) {
-    return accountService.searchAccount(accountNumber);
+
+        return accountService.searchAccount(accountNumber);
 }
+    @PostMapping("/{accountNumber}/balance")
+    public Double getBalance(@PathVariable String accountNumber,
+                             @Valid @RequestBody BalanceRequest request) {
 
-    @GetMapping("/{accountNumber}/balance")
-    public Double getBalance(@PathVariable String accountNumber) {
-        return accountService.getBalance(accountNumber);
+        return accountService.getBalance(
+                accountNumber,
+                request.getTransactionPin());
     }
 
-    @PutMapping("/{accountNumber}/deposit/{amount}")
+    @PutMapping("/{accountNumber}/deposit")
     public Account deposit(@PathVariable String accountNumber,
-                           @PathVariable Double amount) {
+                           @Valid @RequestBody TransactionPinRequest request) {
 
-        return accountService.deposit(accountNumber, amount);
+        return accountService.deposit(accountNumber, request.getAmount(), request.getTransactionPin());
     }
 
-    @PutMapping("/{accountNumber}/withdraw/{amount}")
+    @PutMapping("/{accountNumber}/withdraw")
     public Account withdraw(@PathVariable String accountNumber,
-                            @PathVariable Double amount) {
-        return accountService.withdraw(accountNumber, amount);
+                            @Valid @RequestBody TransactionPinRequest request) {
+
+        return accountService.withdraw(accountNumber, request.getAmount(), request.getTransactionPin());
     }
-
-    @PutMapping("/transfer/{fromAccount}/{toAccount}/{amount}")
+    @PutMapping("/transfer/{fromAccount}")
     public Account transfer(@PathVariable String fromAccount,
-                            @PathVariable String toAccount,
-                            @PathVariable Double amount) {
+                            @Valid @RequestBody TransferRequest request) {
 
-        return accountService.transfer(fromAccount, toAccount, amount);
+        return accountService.transfer(
+                fromAccount,
+                request.getToAccount(),
+                request.getAmount(),
+                request.getTransactionPin());
     }
 @GetMapping("/test")
     public String test() {

@@ -1,5 +1,6 @@
 package com.Bank.account_service.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,4 +29,8 @@ public class Account {
     private String ifscCode;
 
     private Double balance;
+
+    @JsonIgnore
+    @Column(nullable = false)
+    private String transactionPin;
 }

@@ -8,6 +8,11 @@ import com.Bank.account_service.repository.AccountRepository;
 import com.Bank.account_service.service.AccountService;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.NoSuchElementException;
 import java.util.Random;
 
@@ -35,6 +40,7 @@ public class AccountServiceImpl implements AccountService {
                 .branchName(request.getBranchName())
                 .ifscCode(request.getIfscCode())
                 .balance(request.getInitialBalance())
+                .transactionPin(request.getTransactionPin())
                 .build();
 
         return accountRepository.save(account);
@@ -49,37 +55,85 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Double getBalance(String accountNumber) {
+    public Double getBalance(String accountNumber, String transactionPin) {
 
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() ->
                         new RuntimeException("Account Not Found"));
+
+        if (!account.getTransactionPin().equals(transactionPin)) {
+            throw new RuntimeException("Incorrect Transaction PIN. Please check your PIN and try again.");
+        }
 
         return account.getBalance();
     }
-
     @Override
-    public Account deposit(String accountNumber, Double amount) {
+    public Account deposit(String accountNumber,
+                           Double amount,
+                           String transactionPin) {
 
-        Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() ->
-                        new RuntimeException("Account Not Found"));
+        ExecutorService executor = Executors.newSingleThreadExecutor();
 
-        if (amount <= 0) {
-            throw new RuntimeException("Invalid Amount");
+        Callable<Account> depositTask = () -> {
+
+            Account account = accountRepository.findByAccountNumber(accountNumber)
+                    .orElseThrow(() ->
+                            new RuntimeException("Account Not Found"));
+
+            if (!account.getTransactionPin().equals(transactionPin)) {
+                throw new RuntimeException("Please check your transaction PIN and try again.");
+            }
+
+            if (amount <= 0) {
+                throw new RuntimeException("Invalid Amount");
+            }
+
+
+            account.setBalance(account.getBalance() + amount);
+
+            account = accountRepository.save(account);
+
+            TransactionRequest request = new TransactionRequest();
+            request.setFromAccount(accountNumber);
+            request.setToAccount(accountNumber);
+            request.setAmount(amount);
+            request.setTransactionType("DEPOSIT");
+
+            transactionClient.saveTransaction(request);
+
+            return account;
+        };
+
+        try {
+            Future<Account> future = executor.submit(depositTask);
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+
+            Throwable cause = e.getCause();
+
+            if (cause != null) {
+                throw new RuntimeException(cause.getMessage());
+            }
+
+            throw new RuntimeException("Deposit Failed");
+
+        } finally {
+            executor.shutdown();
         }
-
-        account.setBalance(account.getBalance() + amount);
-
-        return accountRepository.save(account);
     }
 
     @Override
-    public Account withdraw(String accountNumber, Double amount) {
+    public Account withdraw(String accountNumber,
+                            Double amount,
+                            String transactionPin) {
 
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() ->
                         new RuntimeException("Account Not Found"));
+
+        if (!account.getTransactionPin().equals(transactionPin)) {
+            throw new RuntimeException("Incorrect Transaction PIN. Please check your PIN and try again.");
+        }
 
         if (amount <= 0) {
             throw new RuntimeException("Invalid Amount");
@@ -91,16 +145,28 @@ public class AccountServiceImpl implements AccountService {
 
         account.setBalance(account.getBalance() - amount);
 
-        return accountRepository.save(account);
+        account = accountRepository.save(account);
+
+        TransactionRequest request = new TransactionRequest();
+        request.setFromAccount(accountNumber);
+        request.setToAccount(accountNumber);
+        request.setAmount(amount);
+        request.setTransactionType("WITHDRAW");
+
+        transactionClient.saveTransaction(request);
+
+        return account;
     }
 
     @Override
-    public Account transfer(String fromAccount, String toAccount, Double amount) {
+    public Account transfer(String fromAccount, String toAccount, Double amount, String transactionPin) {
 
         Account sender = accountRepository.findByAccountNumber(fromAccount)
                 .orElseThrow(() ->
                         new RuntimeException("Sender Account Not Found"));
-
+        if (!sender.getTransactionPin().equals(transactionPin)) {
+            throw new RuntimeException("Incorrect Transaction PIN. Please check your PIN and try again.");
+        }
         Account receiver = accountRepository.findByAccountNumber(toAccount)
                 .orElseThrow(() ->
                         new RuntimeException("Receiver Account Not Found"));

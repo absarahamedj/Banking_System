@@ -9,4 +9,5 @@ public class TransactionRequest {
     private String toAccount;
     private Double amount;
     private String transactionType;
+    private String transactionPin;
 }

@@ -7,9 +7,16 @@ public interface AccountService {
 
     Account createAccount(CreateAccountRequest request);
     Account searchAccount(String accountNumber);
-    Double getBalance(String accountNumber);
-    Account deposit(String accountNumber, Double amount);
-    Account withdraw(String accountNumber, Double amount);
-    Account transfer(String fromAccount, String toAccount, Double amount);
+    Double getBalance(String accountNumber, String transactionPin);
+    Account deposit(String accountNumber,
+                    Double amount,
+                    String transactionPin);
+    Account withdraw(String accountNumber,
+                     Double amount,
+                     String transactionPin);
+    Account transfer(String fromAccount,
+                     String toAccount,
+                     Double amount,
+                     String transactionPin);
 
 }
