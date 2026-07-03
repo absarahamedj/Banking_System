@@ -1,17 +1,17 @@
-# Banking Microservices Project
+# Banking Management System - Microservices
 
 ## Overview
-This project is a Spring Boot Microservices based Banking Application.
+This project is a Banking Management System developed using Spring Boot Microservices Architecture.
 
 ## Technologies Used
-- Java
+- Java 25
 - Spring Boot
-- Spring Security
-- JWT Authentication
-- Spring Cloud Gateway
-- Eureka Server
-- OpenFeign
+- Spring Data JPA
 - MySQL
+- Spring Cloud Eureka
+- API Gateway
+- OpenFeign
+- JWT Authentication
 - Maven
 
 ## Microservices
@@ -23,24 +23,34 @@ This project is a Spring Boot Microservices based Banking Application.
 
 ## Features
 - Customer Registration
-- Customer Login
+- Customer Login (JWT)
 - Create Bank Account
+- Search Account
 - Deposit Money
 - Withdraw Money
 - Fund Transfer
-- Balance Inquiry
-- Search Account
+- Balance Enquiry
 - Transaction History
+- Transaction PIN Security
+- ExecutorService, Callable & Future
 
-## Run Order
+## Ports
+
+Eureka Server : 8761
+
+API Gateway : 8080
+
+Auth Service : 8081
+
+Account Service : 8082
+
+Transaction Service : 8083
+
+## How to Run
+
 1. Start Eureka Server
 2. Start API Gateway
 3. Start Auth Service
 4. Start Account Service
 5. Start Transaction Service
-
-## Database
-Import the SQL script from the `database` folder.
-
-## Postman
-Import the Postman collection from the `postman` folder.
+6. Test APIs using Postman
